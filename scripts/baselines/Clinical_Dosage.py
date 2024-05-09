@@ -1,13 +1,6 @@
 import pickle
 import pandas as pd
 
-dataset = pd.read_csv('./data/cleaned.csv')
-bins = pd.IntervalIndex.from_tuples([
-    (0, 20.999),
-    (20.999, 49),
-    (49, 20000)
-])
-
 class ClinicalDosage:
     def __init__(self, dataset, bins, dropna=True):
         dataset.dropna(inplace=dropna)
@@ -34,13 +27,20 @@ class ClinicalDosage:
         with open(filename, 'wb') as file:
             pickle.dump(self, file)
 
-# TODO: write under __main__
-model = ClinicalDosage(dataset, bins)
-print(f"Accuracy: {model.score()}")
+if __name__ == "__main__":
+    dataset = pd.read_csv('./data/cleaned.csv')
+    bins = pd.IntervalIndex.from_tuples([
+        (0, 20.999),
+        (20.999, 49),
+        (49, 20000)
+    ])
 
-model.save('./models/baselines/ClincalDosage.pkl')
-
-# try to load model
-with open('./models/baselines/ClincalDosage.pkl', 'rb') as file:
-    model = pickle.load(file)
+    model = ClinicalDosage(dataset, bins)
     print(f"Accuracy: {model.score()}")
+
+    model.save('./models/baselines/ClinicalDosage.pkl')
+
+    # try to load model
+    with open('./models/baselines/ClinicalDosage.pkl', 'rb') as file:
+        model = pickle.load(file)
+        print(f"Accuracy: {model.score()}")
