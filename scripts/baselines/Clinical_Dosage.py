@@ -34,6 +34,7 @@ class ClinicalDosage:
         with open(filename, 'wb') as file:
             pickle.dump(self, file)
 
+# TODO: write under __main__
 model = ClinicalDosage(dataset, bins)
 print(f"Accuracy: {model.score()}")
 
