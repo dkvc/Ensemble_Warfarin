@@ -20,7 +20,7 @@ for model in models:
             model = pickle.load(file)
             accuracy = model.score()
             accuracies += [accuracy]
-            print(f"Accuracy: {accuracy}")
+            print(f"{model.__class__.__name__} Accuracy: {accuracy}")
 
 # Plot models vs accuracies
 plt.bar(models, accuracies, color='xkcd:sky blue')
