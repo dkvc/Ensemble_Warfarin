@@ -12,14 +12,14 @@ class ClinicalDosage:
     def __init__(self, dataset, bins, dropna=True):
         dataset.dropna(inplace=dropna)
         self._dataset = dataset
-        self._dataset['Clinical Dose'] = 4.0376 - 0.2546*dataset['Age'] \
-                                                + 0.0118*dataset['Height (cm)'] \
-                                                + 0.0134*dataset['Weight (kg)'] \
-                                                - 0.6752*dataset['Race_Asian'] \
-                                                + 0.4060*dataset['Race_Black or African American'] \
-                                                + 0.0443*dataset['Race_Unknown'] \
-                                                + 1.2799*dataset['Enzyme_inducer'] \
-                                                - 0.5695*dataset['Amiodarone (Cordarone)']
+        self._dataset['Clinical Dose'] = 4.0376 - 0.2546*self._dataset['Age'] \
+                                                + 0.0118*self._dataset['Height (cm)'] \
+                                                + 0.0134*self._dataset['Weight (kg)'] \
+                                                - 0.6752*self._dataset['Race_Asian'] \
+                                                + 0.4060*self._dataset['Race_Black or African American'] \
+                                                + 0.0443*self._dataset['Race_Unknown'] \
+                                                + 1.2799*self._dataset['Enzyme_inducer'] \
+                                                - 0.5695*self._dataset['Amiodarone (Cordarone)']
         self._dataset['Clinical Dose'] *= self._dataset['Clinical Dose']
         self._dataset['Clinical Dose'] = pd.cut(dataset['Clinical Dose'], bins)
         self._dataset['Therapeutic Dose of Warfarin'] = pd.cut(dataset['Therapeutic Dose of Warfarin'], bins)
