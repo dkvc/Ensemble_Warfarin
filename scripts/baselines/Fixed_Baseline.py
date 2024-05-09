@@ -19,15 +19,16 @@ bins = pd.IntervalIndex.from_tuples([
 
 cut = pd.cut(dataset['Therapeutic Dose of Warfarin'], bins)
 nums = dataset['Therapeutic Dose of Warfarin'].value_counts(bins=bins).sort_index()
-print(nums)
+# print(nums)
 
-# fixed baseline: medium class (21-49mg/week)
-baseline = nums[bins[1]]
-print(f"Accuracy: {baseline / sum(nums)}")
+# # fixed baseline: medium class (21-49mg/week)
+# baseline = nums[bins[1]]
+# print(f"Accuracy: {baseline / sum(nums)}")
 
 # create a model that predicts the medium class based on fixed baseline
 class FixedBaseLine:
-    def __init__(self, dataset, bins):
+    def __init__(self, dataset, bins, dropna=True):
+        dataset.dropna(inplace=dropna)
         self.bins = bins
         self.cut = pd.cut(dataset['Therapeutic Dose of Warfarin'], bins)
 
@@ -44,9 +45,9 @@ class FixedBaseLine:
 model = FixedBaseLine(dataset, bins)
 print(f"Accuracy: {model.score()}")
 
-model.save('./models/FixedBaseLine.pkl')
+model.save('./models/baselines/FixedBaseLine.pkl')
 
 # try to load
-with open('./models/FixedBaseLine.pkl', 'rb') as file:
+with open('./models/baselines/FixedBaseLine.pkl', 'rb') as file:
     model = pickle.load(file)
     print(f"Accuracy: {model.score()}")
