@@ -1,109 +1,94 @@
 import numpy as np
 import pandas as pd
 import pickle
-from sklearn.linear_model import LinearRegression
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.impute import SimpleImputer
-import warnings
-warnings.filterwarnings("ignore")
 
-try:
-    from .MultiArmedBandit import MultiArmedBandit
-except ImportError:
-    from MultiArmedBandit import MultiArmedBandit
-
-class LinUCB(MultiArmedBandit):
-    def __init__(self, dataset, bins, dropna=False, alpha=1.0):
-        super().__init__(dataset, bins, dropna)
+class LinUCB():
+    def __init__(self, dataset, bins, alpha=1.0):
+        self.dataset = dataset
+        self.bins = bins
         self.alpha = alpha
-        self.models = [make_pipeline(SimpleImputer(strategy='mean'), StandardScaler(), LinearRegression()) for _ in range(self.num_arms)]
-        self.correct_predictions = np.zeros(self.num_arms)
-        self.arm_counts = np.zeros(self.num_arms)
-        self.A = [np.eye(dataset.shape[1] - 1) for _ in range(self.num_arms)]
-        self.b = [np.zeros(dataset.shape[1] - 1) for _ in range(self.num_arms)]
-
-    def pull_arm(self, x):
-        ucb_values = []
-        x = x.reshape(1, -1).astype(np.float64)
-        for i in range(self.num_arms):
-            if self.arm_counts[i] == 0:
-                ucb_values.append(float('inf'))
-            else:
-                A_inv = np.linalg.inv(self.A[i])
-                theta = A_inv.dot(self.b[i])
-                ucb = x.dot(theta) + self.alpha * np.sqrt(x.dot(A_inv).dot(x.T))
-                ucb_values.append(ucb.item())
-        return np.argmax(ucb_values)
-
-    def update(self, arm_index, x, reward):
-        x = x.reshape(-1, 1)
-        self.A[arm_index] += x @ x.T
-        self.b[arm_index] += reward * x.flatten()
-        self.arm_counts[arm_index] += 1
+        self.num_features = self.dataset.shape[1]
+        self.num_arms = len(bins)
+        self.reset()
 
     def reset(self):
-        self.correct_predictions = np.zeros(self.num_arms)
-        self.arm_counts = np.zeros(self.num_arms)
-        self.A = [np.eye(self.dataset.shape[1] - 1) for _ in range(self.num_arms)]
-        self.b = [np.zeros(self.dataset.shape[1] - 1) for _ in range(self.num_arms)]
+        self.A = [np.identity(self.num_features) for _ in range(self.num_arms)]
+        self.b = [np.zeros(self.num_features) for _ in range(self.num_arms)]
+        self.prediction = []
 
-    def train(self, X_train, y_train):
-        for i in range(self.num_arms):
-            bin_mask = (y_train >= self.bins[i].left) & (y_train <= self.bins[i].right)
-            if bin_mask.any():
-                self.models[i].fit(X_train[bin_mask], y_train[bin_mask])
+    def pull_arm(self, features_row):
+        p = [None for _ in range(self.num_arms)]
+        for arm in range(self.num_arms):
+            A_inv = np.linalg.inv(self.A[arm])
+            theta = np.dot(A_inv, self.b[arm])
+            p[arm] = np.dot(theta, features_row) + \
+                     self.alpha * np.sqrt(np.dot(np.dot(features_row.T, A_inv), features_row))
+        return int(np.argmax(p))
+
+    def update(self, arm_index, features_row, reward):
+        self.A[arm_index] += np.outer(features_row.T, features_row)
+        self.b[arm_index] += reward * features_row
+
+    def train(self, X_train, y_train, reward_function):
+        num_rows = X_train.shape[0]
+        for row in range(num_rows):
+            features_row = X_train[row]
+            arm_chosen = self.pull_arm(features_row)
+            reward = reward_function(arm_chosen, y_train[row])
+            self.update(arm_chosen, features_row, reward)
+            self.prediction.append(arm_chosen)
+
+    def score(self, X_test, y_test, reward_function):
+        predictions = []
+        for features_row in X_test:
+            arm_chosen = self.pull_arm(features_row)
+            predictions.append(arm_chosen)
+        accuracy = np.mean([reward_function(predictions[i], y_test[i]) for i in range(len(y_test))])
+        return accuracy
+    
+    def reward_function(self, prediction, row):
+        return int(self.bins[prediction].left <= row <= self.bins[prediction].right)
 
     def save(self, filename):
         with open(filename, 'wb') as file:
             pickle.dump(self, file)
 
-    def score(self, X_test=None, y_test=None):
-        if not (isinstance(X_test, pd.DataFrame) and isinstance(y_test, pd.Series)):
-            test_df = pd.read_csv("./data/test.csv")
-            test_df.dropna(inplace=True)
-            X_test = test_df.drop(columns=['Therapeutic Dose of Warfarin'])
-            y_test = test_df['Therapeutic Dose of Warfarin']
-
-        total_predictions = 0
-        correct_predictions = 0
-        bin_accuracy = []
-
-        for i in range(len(X_test)):
-            x = X_test.iloc[i].values.reshape(1, -1).astype(np.float64)
-            arm = self.pull_arm(x)
-            x = X_test.iloc[i].values.reshape(1, -1).astype(np.float64)
-            prediction = self.models[arm].predict(x)
-            total_predictions += 1
-            if self.bins.get_indexer([y_test.iloc[i]])[0] == arm:
-                correct_predictions += 1
-            #self.update(arm, x.flatten(), correct_predictions)
-            
-            bin_accuracy.append((self.bins[arm], correct_predictions / total_predictions))
-
-        accuracy = correct_predictions / total_predictions
-        return accuracy
-
+def normalize(features):
+    mean = np.mean(features, axis=0)
+    std = np.std(features, axis=0)
+    return (features - mean) / (std + 1e-10)
 
 if __name__ == "__main__":
-    train_df = pd.read_csv("./data/train.csv")
+    # train features - train_features.npy & train_labels.npy
+    X_train = np.load("./data/train_features.npy")
+    y_train = np.load("./data/train_labels.npy")
+
+    # test features - test_features.npy & test_labels.npy
+    X_test = np.load("./data/test_features.npy")
+    y_test = np.load("./data/test_labels.npy")
+
+    # Normalize the features
+    X_train = normalize(X_train)
+    X_test = normalize(X_test)
+
+    # Define the bins for the bandit
     bins = pd.IntervalIndex.from_tuples([
-        (0, 20.999),
-        (20.999, 49),
-        (49, 20000)
+    (0, 20.999),
+    (20.999, 49),
+    (49, 20000)
     ])
 
-    X_train = train_df.drop(columns=['Therapeutic Dose of Warfarin'])
-    y_train = train_df['Therapeutic Dose of Warfarin']
+    # Train the LinUCB model
+    linucb = LinUCB(X_train, bins)
 
-    model = LinUCB(train_df, bins)
-    model.train(X_train, y_train)
-    model.save('./models/bandits/LinUCB.pkl')
+    # Train the model
+    linucb.train(X_train, y_train, linucb.reward_function)
 
-    with open('./models/bandits/LinUCB.pkl', 'rb') as file:
-        model = pickle.load(file)
-    accuracy = model.score()
-    print(f"Accuracy: {accuracy}")
-    # print("Bin Accuracy:")
-    # for bin, acc in bin_accuracy:
-    #     print(f"Bin: {bin}, Accuracy: {acc}")
+    # Save the model
+    linucb.save("./models/LinUCB.pkl")
+
+    # load & test the model
+    with open("./models/LinUCB.pkl", 'rb') as file:
+        loaded_model = pickle.load(file)
+        accuracy = loaded_model.score(X_test, y_test, loaded_model.reward_function)
+        print(f"Accuracy: {accuracy}")
