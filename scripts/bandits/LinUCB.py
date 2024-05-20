@@ -85,10 +85,10 @@ if __name__ == "__main__":
     linucb.train(X_train, y_train, linucb.reward_function)
 
     # Save the model
-    linucb.save("./models/LinUCB.pkl")
+    linucb.save("./models/bandits/LinUCB.pkl")
 
     # load & test the model
-    with open("./models/LinUCB.pkl", 'rb') as file:
+    with open("./models/bandits/LinUCB.pkl", 'rb') as file:
         loaded_model = pickle.load(file)
         accuracy = loaded_model.score(X_test, y_test, loaded_model.reward_function)
         print(f"Accuracy: {accuracy}")
