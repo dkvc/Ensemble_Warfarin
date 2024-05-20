@@ -9,10 +9,12 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from scripts.baselines import *
+from scripts.bandits import *
 
-base_path = "./models/baselines/"
-baselines = ["FixedBaseLine", "ClinicalDosage", "PharmogenicDosage"]
-models = baselines
+base_path = "./models/"
+baselines = ["baselines/FixedBaseLine", "baselines/ClinicalDosage", "baselines/PharmogenicDosage"]
+bandits = ["bandits/LinUCB", "bandits/Lasso", "bandits/Thompson", "bandits/Ensemble"]
+models = baselines + bandits
 
 accuracies = []
 for model in models:
@@ -20,7 +22,10 @@ for model in models:
             model = pickle.load(file)
             accuracy = model.score()
             accuracies += [accuracy]
-            print(f"{model.__class__.__name__} Accuracy: {accuracy}")
+            if hasattr(model, 'time_taken'):
+                print(f"{model.__class__.__name__}, Accuracy: {accuracy}, Time taken: {model.time_taken:.3f} seconds")
+            else:
+                print(f"{model.__class__.__name__}, Accuracy: {accuracy}")
 
 # Plot models vs accuracies
 plt.bar(models, accuracies, color='xkcd:sky blue')
