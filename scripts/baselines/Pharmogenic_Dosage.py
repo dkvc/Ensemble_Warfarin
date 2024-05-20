@@ -3,7 +3,8 @@ import pandas as pd
 
 class PharmogenicDosage:
     def __init__(self, dataset, bins, dropna=True):
-        dataset.dropna(inplace=dropna) # there are no null values to drop in this case
+        if dropna:
+            dataset.dropna(inplace=True) # there are no null values to drop in this case
         self._dataset = dataset
         self._dataset['Pharmogenic Dose'] = 5.6044 - 0.2614*self._dataset['Age'] \
                                                 + 0.0087*self._dataset['Height (cm)'] \

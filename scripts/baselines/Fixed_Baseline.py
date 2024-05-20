@@ -4,7 +4,8 @@ import pandas as pd
 
 class FixedBaseLine:
     def __init__(self, dataset, bins, dropna=True):
-        dataset.dropna(inplace=dropna)
+        if dropna:
+            dataset.dropna(inplace=True)
         self.bins = bins
         self.cut = pd.cut(dataset['Therapeutic Dose of Warfarin'], bins)
 

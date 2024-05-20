@@ -3,7 +3,8 @@ import pandas as pd
 
 class ClinicalDosage:
     def __init__(self, dataset, bins, dropna=True):
-        dataset.dropna(inplace=dropna)
+        if dropna:
+            dataset.dropna(inplace=True)
         self._dataset = dataset
         self._dataset['Clinical Dose'] = 4.0376 - 0.2546*self._dataset['Age'] \
                                                 + 0.0118*self._dataset['Height (cm)'] \
