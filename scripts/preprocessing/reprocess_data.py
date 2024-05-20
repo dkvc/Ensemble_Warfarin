@@ -34,28 +34,28 @@ def all_feature_extractor(row):
     feature = []
 
     # Age in decades
-    feature.append(float(row[0]))  # Assuming 'Age' is at index 0
+    feature.append(float(row[0]))
 
     # Height in cm
-    feature.append(float(row[1]))  # Assuming 'Height' is at index 1
+    feature.append(float(row[1]))
 
     # Weight in kg
-    feature.append(float(row[2]))  # Assuming 'Weight' is at index 2
+    feature.append(float(row[2]))
 
     # Amiodarone status
-    feature.append(float(row[3] == '1'))  # Assuming 'Amiodarone (Cordarone)' is at index 3
+    feature.append(float(row[3] == '1'))
 
     # Enzyme inducer status
-    feature.append(float(row[5] == '1'))  # Assuming 'Enzyme_inducer' is at index 5
+    feature.append(float(row[5] == '1'))
 
     # Race
-    if row[6] == 'True':  # Assuming 'Race_Asian' is at index 6
+    if row[6] == 'True':
         feature += [1, 0, 0, 0]
-    elif row[7] == 'True':  # Assuming 'Race_Black or African American' is at index 7
+    elif row[7] == 'True':
         feature += [0, 1, 0, 0]
-    elif row[8] == 'True':  # Assuming 'Race_Unknown' is at index 8
+    elif row[8] == 'True':
         feature += [0, 0, 1, 0]
-    else:  # Assuming 'Race_White' is at index 9
+    else:
         feature += [0, 0, 0, 1]
 
     # CYP2C9 genotypes
@@ -96,6 +96,5 @@ if __name__ == "__main__":
         print(all_features)
         print(labels)
 
-        # Save the features and labels
         np.save(f"./data/{name}_features.npy", all_features)
         np.save(f"./data/{name}_labels.npy", labels)
