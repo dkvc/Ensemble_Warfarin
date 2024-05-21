@@ -10,8 +10,9 @@ except ImportError:
     from MultiArmedBandit import MultiArmedBandit
 
 class ThompsonSamplingBandit(MultiArmedBandit):
-    def __init__(self, dataset, bins, dropna=False):
-        super().__init__(dataset, bins, dropna)
+    def __init__(self, bins, dropna=False):
+        self.bins = bins
+        self.num_arms = len(bins)
         self.time_taken = 0
         self.reset()
 
@@ -36,6 +37,9 @@ class ThompsonSamplingBandit(MultiArmedBandit):
         else:
             self.failures[arm_index] += 1
 
+    def reward_function(self, true_arm, predicted_arm):
+        return 1 if true_arm == predicted_arm else 0
+
     def train(self, X_train, y_train, epochs=10):
         time_start = time.perf_counter()
         for _ in range(epochs):
@@ -43,15 +47,14 @@ class ThompsonSamplingBandit(MultiArmedBandit):
             indices = np.random.permutation(len(X_train))
 
             for i in indices:
-                true_dose = y_train.iloc[i]
-                arm_index = self.bins.get_indexer([true_dose])[0]
+                arm_index = y_train[i]
 
                 # Pull the arm and update the model
                 sampled_values = [self.pull_arm(i) for i in range(self.num_arms)]
                 predicted_arm = np.argmax(sampled_values)
 
                 # Update the model based on the reward
-                reward = 1 if predicted_arm == arm_index else 0
+                reward = self.reward_function(arm_index, predicted_arm)
                 self.update(predicted_arm, reward)
 
                 # Debug
@@ -67,29 +70,33 @@ class ThompsonSamplingBandit(MultiArmedBandit):
         self.time_taken = time.perf_counter() - time_start
 
     def score(self):
-        # Calculate the accuracy of the model
-        # from collections import Counter
-        # print(f"True Labels: {Counter(self.true_labels)}")
-        # print(f"Predicted Labels: {Counter(self.predicted_labels)}")
-        
-        # # show success & failures only in numbers, not scientific notation
-        # print(f"Successes: {self.successes.astype(int)}")
-        # print(f"Failures: {self.failures.astype(int)}")
-        accuracy = sum(np.array(self.true_labels) == np.array(self.predicted_labels)) / len(self.true_labels)
+        correct_predictions = sum(1 for true_label, pred_label in zip(self.true_labels, self.predicted_labels) if true_label == pred_label)
+        total_predictions = len(self.true_labels)
+        accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
         return accuracy
+    
+    def f1_score(self):
+        from sklearn.metrics import f1_score
+        return f1_score(self.true_labels, self.predicted_labels, average='weighted')
     
     def save(self, filename):
         return super().save(filename)
     
     def time_taken(self):
-        return self.time_taken
-        
-    
+        return self.time_taken    
+
+def normalize(features):
+    mean = np.mean(features, axis=0)
+    std = np.std(features, axis=0)
+    return (features - mean) / (std + 1e-10)
+
 if __name__ == "__main__":
     import pandas as pd
     import pickle
-    train_df, test_df = pd.read_csv("data/train.csv"), pd.read_csv("data/test.csv")
-    X_train, y_train = train_df.drop(columns=['Therapeutic Dose of Warfarin']), train_df['Therapeutic Dose of Warfarin']
+    import numpy as np
+    X_train, y_train = np.load('./data/cleaned_features.npy'), np.load('./data/cleaned_labels.npy')
+
+    X_train = normalize(X_train)
 
     bins = pd.IntervalIndex.from_tuples([
         (0, 20.999),
@@ -97,9 +104,9 @@ if __name__ == "__main__":
         (49 ,20000)
     ])
     
-    model = ThompsonSamplingBandit(train_df, bins)
+    model = ThompsonSamplingBandit(bins)
     #cProfile.run('model.train(X_train, y_train, epochs=20)')
-    model.train(X_train, y_train, epochs=20)
+    model.train(X_train, y_train, epochs=100)
     model.save('./models/bandits/Thompson.pkl')
 
     # try to load the model
@@ -108,4 +115,5 @@ if __name__ == "__main__":
 
         from pprint import pprint
         pprint(model.score())
+        pprint(model.f1_score())
         pprint(f"Time taken: {model.time_taken:.3f}")

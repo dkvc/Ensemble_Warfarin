@@ -63,7 +63,7 @@ class LassoBandit(MultiArmedBandit):
         for i in range(len(X_test)):
             arm = self.pull_arm()
             X = X_test.iloc[i].values.reshape(1, -1)
-            prediction = self.models[arm].predict(X)
+            _ = self.models[arm].predict(X)
             
             actual_value = y_test.iloc[i]
             correct = (self.bins[arm].left <= actual_value <= self.bins[arm].right)
@@ -75,6 +75,32 @@ class LassoBandit(MultiArmedBandit):
         
         accuracy = correct_predictions / total_predictions
         return accuracy
+    
+    def f1_score(self, X_test=None, y_test=None):
+        if not (isinstance(X_test, pd.DataFrame) or isinstance(y_test, pd.Series)):
+            test_df = pd.read_csv("data/test.csv")
+            test_df.dropna(inplace=True)
+            X_test = test_df.drop(columns=['Therapeutic Dose of Warfarin'])
+            y_test = test_df['Therapeutic Dose of Warfarin']
+
+        true_values = []
+        predicted_labels = []
+        from sklearn.metrics import f1_score
+
+        for i in range(len(X_test)):
+            arm = self.pull_arm()
+            X = X_test.iloc[i].values.reshape(1, -1)
+            _ = self.models[arm].predict(X)
+            
+            actual_value = y_test.iloc[i]
+            correct = (self.bins[arm].left <= actual_value <= self.bins[arm].right)
+            
+            true_values.append(int(correct))
+            predicted_labels.append(arm)
+
+            self.update(arm, int(correct))
+
+        return f1_score(true_values, predicted_labels, average='weighted')
 
 if __name__ == "__main__":
     import pandas as pd
@@ -108,3 +134,4 @@ if __name__ == "__main__":
     with open("./models/bandits/Lasso.pkl", 'rb') as file:
         loaded_model = pickle.load(file)
         print(f"Loaded model accuracy: {loaded_model.score(X_test, y_test)}")
+        print(f"Loaded model f1 score: {loaded_model.f1_score(X_test, y_test)}")
