@@ -22,26 +22,23 @@ def normalize(features):
     return (features - mean) / (std + 1e-10)
 
 accuracies = []
-for model in models:
-    with open(base_path + model + ".pkl", 'rb') as file:
+f1_scores = []
+for model_name in models:
+    with open(base_path + model_name + ".pkl", 'rb') as file:
             model = pickle.load(file)
-            
-            # if score requires test data, load it
-            if model.__class__.__name__ in ["LinUCB"]:
-                X_test = np.load("./data/test_features.npy")
-                y_test = np.load("./data/test_labels.npy")
-
-                X_test = normalize(X_test)
-
-                accuracy = model.score(X_test, y_test, model.reward_function)
-            else:
-                accuracy = model.score()
+            accuracy = model.score()
 
             accuracies += [accuracy]
             if hasattr(model, 'time_taken'):
                 print(f"{model.__class__.__name__}, Accuracy: {accuracy}, Time taken: {model.time_taken:.3f} seconds")
             else:
                 print(f"{model.__class__.__name__}, Accuracy: {accuracy}")
+
+            if model_name in bandits:
+                f1_score = model.f1_score()
+                f1_scores += [f1_score]
+
+                print(f"{model.__class__.__name__}, F1 Score: {f1_score}")
 
 # Plot models vs accuracies
 plt.bar(models, accuracies, color='xkcd:sky blue')
@@ -50,4 +47,13 @@ plt.xlabel("Model")
 plt.title("Model vs Accuracy")
 plt.grid(True, alpha=0.3)
 plt.yticks(np.arange(0, 1, 0.1))
-plt.show()  
+plt.show()
+
+# Plot models vs f1 scores
+plt.bar(bandits, f1_scores, color='xkcd:lavender')
+plt.ylabel("F1 Score")
+plt.xlabel("Model")
+plt.title("Model vs F1 Score")
+plt.grid(True, alpha=0.3)
+plt.yticks(np.arange(0, 1, 0.1))
+plt.show()
