@@ -89,7 +89,7 @@ def extract_all_features(data):
     return np.array([all_feature_extractor(row) for row in data])
 
 if __name__ == "__main__":
-    names = ["train", "test"]
+    names = ["train", "test", "cleaned"]
     for name in names:
         data, labels = load_data(f"./data/{name}.csv")
         all_features = extract_all_features(data)
