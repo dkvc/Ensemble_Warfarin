@@ -1,5 +1,6 @@
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import time
+import numpy as np
 
 # Try to handle imports based on execution context
 try:
@@ -31,7 +32,12 @@ class EnsembleSamplingBandit():
             pickle.dump(self, file)
 
     def train_model(self, model, X_train, y_train, epochs):
-        model.train(X_train, y_train, epochs)
+        # Randomly shuffle the training data
+        indices = np.random.permutation(len(X_train))
+        X_train_shuffled, y_train_shuffled = X_train[indices], y_train[indices]
+        #print(f"Training model with {len(X_train_shuffled)} samples")
+        #print(f"Training model with {len(y_train_shuffled)} samples")
+        model.train(X_train_shuffled, y_train_shuffled, epochs)
         return model.true_labels, model.predicted_labels
 
     def train(self, X_train, y_train, epochs=10):
@@ -41,6 +47,7 @@ class EnsembleSamplingBandit():
         with ProcessPoolExecutor() as executor:
             futures = [executor.submit(self.train_model, model, X_train, y_train, epochs) for model in self.models]
             for future in as_completed(futures):
+                #print(f"Training model {future}")
                 true_labels, predicted_labels = future.result()
                 self.true_labels.extend(true_labels)
                 self.predicted_labels.extend(predicted_labels)
