@@ -75,7 +75,7 @@ for model_name in torch_bandits:
         print(f"{model.__class__.__name__}, Time taken: {model.time_taken:.3f} seconds")
     
     if model_name == "bandits/EnsembleSampling":
-        #print(f"{model.__class__.__name__}, Time taken: {model.time_taken():.3f} seconds")
+        print(f"{model.__class__.__name__}, Time taken: {model.time_taken():.3f} seconds")
         print(f"EnsembleSampling, F1 Score: {f1 / len(model)}")
     else:
         f1_score = model.f1_score()
