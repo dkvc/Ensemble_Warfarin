@@ -5,7 +5,7 @@ import pandas as pd
 import torch
 from torch.distributions.multivariate_normal import MultivariateNormal
 
-class EnsembleSamplingBandit:
+class EnsembleSampling:
     def __init__(self, X_train, bins, num_models=5, device='cuda'):
         self.device = device if device is not None else ('cuda' if torch.cuda.is_available() else 'cpu')
         
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     ])
 
     # Create and train Ensemble Sampling Bandit model
-    ensemble_sampling = EnsembleSamplingBandit(X_train, bins, num_models=120)
+    ensemble_sampling = EnsembleSampling(X_train, bins, num_models=120)
     ensemble_sampling.train(X_train, y_train, ensemble_sampling.reward_function)
     
     model_base_path = './saved/models/bandits'
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     model_path = model_base_path + "/ensemble.pt"
     ensemble_sampling.save(model_path)
 
-    loaded_model = EnsembleSamplingBandit(X_train, bins)
+    loaded_model = EnsembleSampling(X_train, bins)
     loaded_model.load(model_path)
     cumulative_reward = loaded_model.cumulative_reward
     print(f"Cumulative Reward: {cumulative_reward}")
