@@ -1,4 +1,3 @@
-import pickle
 import sys
 import os
 
@@ -17,20 +16,8 @@ from models.baselines import *
 from models.bandits import *
 
 base_path = "./saved/models/"
-baselines = ["baselines/FixedBaseLine", "baselines/ClinicalDosage", "baselines/PharmogenicDosage"]
-bandits = ["bandits/linucb", "bandits/thompson", "bandits/ensemble"]
-loaded_models = [LinUCB, ThompsonSampling, EnsembleSampling]
-
-accuracies = []
-for baseline in baselines:
-    model_path = base_path + baseline + ".pkl"
-    with open(model_path, 'rb') as file:
-        model = pickle.load(file)
-        accuracy = model.score()
-        
-        print(f"Accuracy: {accuracy*100:.2f}%")
-        accuracies.append(accuracy)
-
+bandits = ["bandits/thompson", "bandits/ensemble"]
+loaded_models = [ThompsonSampling, EnsembleSampling]
 cumulative_rewards = []
 regrets = []
 time_taken_models = []
@@ -46,6 +33,9 @@ for i, bandit in enumerate(bandits):
     X_train = np.load("./data/modified/deep_cleaned_features.npy")
     X_train = torch.tensor(X_train, dtype=torch.float32)
     X_train = normalize(X_train)
+    
+    y_train = np.load("./data/modified/deep_cleaned_labels.npy")
+    y_train = torch.tensor(y_train, dtype=torch.float32)
 
     bins = pd.IntervalIndex.from_tuples([
         (0, 20.999),
@@ -66,3 +56,50 @@ for i, bandit in enumerate(bandits):
 
     print("Time taken:", loaded_model.time_taken)
     loaded_models.append(loaded_model)
+
+num_models = []
+cumulative_rewards_ensem = []
+regrets_ensem = []
+time_taken_ensem = []
+for i in range(5, 2000, 10):
+    print("Number of models:", i)
+    num_models.append(i)
+    ensemble_sampling = EnsembleSampling(X_train, bins, num_models=i)
+    ensemble_sampling.train(X_train, y_train, ensemble_sampling.reward_function)
+
+    cumulative_reward = ensemble_sampling.cumulative_reward
+    regret = ensemble_sampling.regret
+    time_taken = ensemble_sampling.time_taken
+
+    cumulative_rewards_ensem.append(cumulative_reward)
+    regrets_ensem.append(regret)
+    time_taken_ensem.append(time_taken)
+
+    # Plotting
+plt.figure(figsize=(12, 8))
+
+# Cumulative Reward Comparison
+plt.subplot(3, 1, 1)
+#plt.plot([1, 2], cumulative_rewards, 'ro-', label='Bandits')
+plt.plot(num_models, cumulative_rewards_ensem, 'bo-', label='Ensemble Sampling')
+plt.title('Cumulative Rewards')
+plt.ylabel('Cumulative Reward')
+plt.legend()
+
+# Regret Comparison
+plt.subplot(3, 1, 2)
+#plt.plot([1, 2], regrets, 'ro-', label='Bandits')
+plt.plot(num_models, regrets_ensem, 'bo-', label='Ensemble Sampling')
+plt.title('Regrets')
+plt.ylabel('Regret')
+plt.legend()
+
+# Time Taken for Models
+plt.subplot(3, 1, 3)
+#plt.plot([1, 2], time_taken_models, 'ro-', label='Bandits')
+plt.plot(num_models, time_taken_ensem, 'bo-', label='Ensemble Sampling')
+plt.title('Time taken')
+plt.ylabel('Time taken')
+plt.legend()
+
+plt.show()
