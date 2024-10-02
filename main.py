@@ -61,21 +61,32 @@ num_models = []
 cumulative_rewards_ensem = []
 regrets_ensem = []
 time_taken_ensem = []
-for i in range(5, 2000, 10):
+for i in range(5, 100, 10):
     print("Number of models:", i)
     num_models.append(i)
-    ensemble_sampling = EnsembleSampling(X_train, bins, num_models=i)
-    ensemble_sampling.train(X_train, y_train, ensemble_sampling.reward_function)
+    avg = []
+    iters = 5
+    for _ in range(iters):
+        ensemble_sampling = EnsembleSampling(X_train, bins, num_models=i)
+        ensemble_sampling.train(X_train, y_train, ensemble_sampling.reward_function)
 
-    cumulative_reward = ensemble_sampling.cumulative_reward
-    regret = ensemble_sampling.regret
-    time_taken = ensemble_sampling.time_taken
+        cumulative_reward = ensemble_sampling.cumulative_reward
+        regret = ensemble_sampling.regret
+        time_taken = ensemble_sampling.time_taken
+
+        avg.append([cumulative_reward, regret, time_taken])
+
+    cumulative_reward = sum(iter[0] for iter in avg) // len(avg)
+    regret = sum(iter[1] for iter in avg) // len(avg)
+    time_taken = sum(iter[2] for iter in avg) // len(avg)
+
+    print(f"Avg Cumulative Reward: {cumulative_reward}, Avg. Regret: {regret}, Avg. Time taken: {time_taken} over {iters} iters")
 
     cumulative_rewards_ensem.append(cumulative_reward)
     regrets_ensem.append(regret)
     time_taken_ensem.append(time_taken)
 
-    # Plotting
+# Plotting
 plt.figure(figsize=(12, 8))
 
 # Cumulative Reward Comparison
