@@ -12,7 +12,6 @@ warnings.filterwarnings('ignore')
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
-from models.baselines import *
 from models.bandits import *
 
 base_path = "./saved/models/"
