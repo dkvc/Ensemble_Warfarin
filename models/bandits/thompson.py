@@ -6,6 +6,10 @@ import pandas as pd
 import torch
 from torch.distributions.multivariate_normal import MultivariateNormal
 
+# temporary
+import warnings
+warnings.filterwarnings('ignore')
+
 class ThompsonSampling:
     def __init__(self, X_train, bins=None, device='cuda'):
         self.device = device if device is not None else ('cuda' if torch.cuda.is_available() else 'cpu')
@@ -95,6 +99,10 @@ class ThompsonSampling:
         regret = optimal_reward - self.cumulative_reward
         self.regret = regret
         return regret
+    
+    def predict(self, features_row):
+        features_row = torch.tensor(features_row, dtype=torch.float32).to(self.device)
+        return self.pull_arm(features_row)
 
     def save(self, filepath):
         torch.save({
@@ -137,14 +145,31 @@ if __name__ == "__main__":
     y_train = torch.tensor(y_train, dtype=torch.float32)
     X_train = normalize(X_train)
 
+    print(f"Data size: {y_train.shape}")
+
     bins = pd.IntervalIndex.from_tuples([
         (0, 20.999),
         (20.999, 49),
         (49, 20000)
     ])
 
-    thompson_sampling = ThompsonSampling(X_train, bins)
-    thompson_sampling.train(X_train, y_train, thompson_sampling.reward_function)
+    train_times = []
+    for i in range(10):
+        train_time_start = time.perf_counter()
+
+        thompson_sampling = ThompsonSampling(X_train, bins)
+        thompson_sampling.train(X_train, y_train, thompson_sampling.reward_function)
+
+        train_time_taken = time.perf_counter() - train_time_start
+        train_times.append(train_time_taken)
+
+        # Clear cache
+        torch.cuda.empty_cache()
+
+        print(f"Run {i+1}:")
+        print(f"  Training Time: {train_time_taken:.2f} seconds")
+
+    print(f"Avg Time taken for Training: {sum(train_times) / len(train_times)} seconds")
     
     model_base_path = './saved/models/bandits'
     os.makedirs(model_base_path, exist_ok=True)
@@ -159,5 +184,11 @@ if __name__ == "__main__":
 
     regret = loaded_model.regret
     print(f"Regret: {regret}")
+
+    test_features = X_train[0]
+    test_label = y_train[0]
+    predicted_arm = loaded_model.predict(test_features)
+
+    print(f"Test Label: {test_label.item()}, Predicted Arm: {predicted_arm}")
 
     print("Time taken:", loaded_model.time_taken)
