@@ -5,6 +5,10 @@ import pandas as pd
 import torch
 from torch.distributions.multivariate_normal import MultivariateNormal
 
+# temporary
+import warnings
+warnings.filterwarnings('ignore')
+
 class EnsembleSampling:
     def __init__(self, X_train, bins, num_models=5, device='cuda'):
         self.device = device if device is not None else ('cuda' if torch.cuda.is_available() else 'cpu')
@@ -38,17 +42,17 @@ class EnsembleSampling:
         distribution = MultivariateNormal(mean, covariance)
         return distribution.sample()
 
-    def sample(self):
+    def sample(self, features_row):
         sampled_means = torch.zeros(self.num_arms, device=self.device)
         for arm_index in range(self.num_arms):
             sampled_theta = self.sample_theta(arm_index)
-            sampled_means[arm_index] = torch.matmul(self.X_train, sampled_theta).mean()
+            sampled_means[arm_index] = torch.matmul(features_row, sampled_theta).mean()
         return sampled_means
 
     def pull_arm(self, features_row):
         # Sample means and select arm with maximum mean
         features_row = features_row.to(self.device)
-        sampled_means = self.sample()
+        sampled_means = self.sample(features_row)
         chosen_arm = int(torch.argmax(sampled_means))
         return chosen_arm
 
@@ -99,6 +103,12 @@ class EnsembleSampling:
         regret = optimal_reward - self.cumulative_reward
         self.regret = regret
         return regret
+    
+    def predict(self, features_row):
+        features_row = features_row.to(self.device)
+        sampled_means = self.sample(features_row)
+        chosen_arm = int(torch.argmax(sampled_means))
+        return chosen_arm
 
     def save(self, filepath):
         torch.save({
@@ -141,6 +151,8 @@ if __name__ == "__main__":
     y_train = torch.tensor(y_train, dtype=torch.float32)
     X_train = normalize(X_train)
 
+    print(f"Data size: {y_train.shape}")
+
     bins = pd.IntervalIndex.from_tuples([
         (0, 20.999),
         (20.999, 49),
@@ -148,8 +160,23 @@ if __name__ == "__main__":
     ])
 
     # Create and train Ensemble Sampling Bandit model
-    ensemble_sampling = EnsembleSampling(X_train, bins, num_models=120)
-    ensemble_sampling.train(X_train, y_train, ensemble_sampling.reward_function)
+    train_times = []
+    for i in range(10):
+        train_time_start = time.perf_counter()
+
+        ensemble_sampling = EnsembleSampling(X_train, bins, num_models=5)
+        ensemble_sampling.train(X_train, y_train, ensemble_sampling.reward_function)
+
+        train_time_taken = time.perf_counter() - train_time_start
+        train_times.append(train_time_taken)
+
+        # Clear cache
+        torch.cuda.empty_cache()
+
+        print(f"Run {i+1}:")
+        print(f"  Training Time: {train_time_taken:.2f} seconds")
+
+    print(f"Avg Time taken for Training: {sum(train_times) / len(train_times)} seconds")
     
     model_base_path = './saved/models/bandits'
     os.makedirs(model_base_path, exist_ok=True)
@@ -164,5 +191,11 @@ if __name__ == "__main__":
 
     regret = loaded_model.regret
     print(f"Regret: {regret}")
+
+    test_features = X_train[0]
+    test_label = y_train[0]
+    predicted_arm = loaded_model.predict(test_features)
+
+    print(f"Test Label: {test_label.item()}, Predicted Arm: {predicted_arm}")
 
     print("Time taken:", loaded_model.time_taken)
