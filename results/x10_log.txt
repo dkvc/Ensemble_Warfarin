@@ -1,0 +1,57 @@
+Data size: torch.Size([33060])
+Test Label: 1.0, Predicted Arm: 0 <-> Time: 3201180.00 nanosec
+Test Label: 1.0, Predicted Arm: 2 <-> Time: 3213664.00 nanosec
+Run 1:
+  [Thompson] Training Time: 109.46 seconds | Cumulative Reward: 11104 | Regret: 21946
+  [Ensemble] Training Time: 113.27 seconds | Cumulative Reward: 10909 | Regret: 22141
+Test Label: 1.0, Predicted Arm: 0 <-> Time: 13449286.00 nanosec
+Test Label: 1.0, Predicted Arm: 1 <-> Time: 3048888.00 nanosec
+Run 2:
+  [Thompson] Training Time: 108.98 seconds | Cumulative Reward: 11202 | Regret: 21848
+  [Ensemble] Training Time: 112.29 seconds | Cumulative Reward: 11073 | Regret: 21977
+Test Label: 1.0, Predicted Arm: 0 <-> Time: 13298953.00 nanosec
+Test Label: 1.0, Predicted Arm: 2 <-> Time: 2963738.00 nanosec
+Run 3:
+  [Thompson] Training Time: 108.35 seconds | Cumulative Reward: 10969 | Regret: 22081
+  [Ensemble] Training Time: 113.00 seconds | Cumulative Reward: 10895 | Regret: 22155
+Test Label: 1.0, Predicted Arm: 1 <-> Time: 17249911.00 nanosec
+Test Label: 1.0, Predicted Arm: 2 <-> Time: 3262793.00 nanosec
+Run 4:
+  [Thompson] Training Time: 108.98 seconds | Cumulative Reward: 11032 | Regret: 22018
+  [Ensemble] Training Time: 112.31 seconds | Cumulative Reward: 11188 | Regret: 21862
+Test Label: 1.0, Predicted Arm: 1 <-> Time: 13752173.00 nanosec
+Test Label: 1.0, Predicted Arm: 2 <-> Time: 3182648.00 nanosec
+Run 5:
+  [Thompson] Training Time: 107.95 seconds | Cumulative Reward: 11051 | Regret: 21999
+  [Ensemble] Training Time: 112.29 seconds | Cumulative Reward: 11177 | Regret: 21873
+Test Label: 1.0, Predicted Arm: 0 <-> Time: 14784399.00 nanosec
+Test Label: 1.0, Predicted Arm: 0 <-> Time: 2974344.00 nanosec
+Run 6:
+  [Thompson] Training Time: 108.77 seconds | Cumulative Reward: 11036 | Regret: 22014
+  [Ensemble] Training Time: 111.40 seconds | Cumulative Reward: 11090 | Regret: 21960
+Test Label: 1.0, Predicted Arm: 1 <-> Time: 16381892.00 nanosec
+Test Label: 1.0, Predicted Arm: 2 <-> Time: 3112759.00 nanosec
+Run 7:
+  [Thompson] Training Time: 107.89 seconds | Cumulative Reward: 11017 | Regret: 22033
+  [Ensemble] Training Time: 111.72 seconds | Cumulative Reward: 11161 | Regret: 21889
+Test Label: 1.0, Predicted Arm: 1 <-> Time: 13607017.00 nanosec
+Test Label: 1.0, Predicted Arm: 0 <-> Time: 3180837.00 nanosec
+Run 8:
+  [Thompson] Training Time: 108.53 seconds | Cumulative Reward: 11288 | Regret: 21762
+  [Ensemble] Training Time: 111.91 seconds | Cumulative Reward: 11093 | Regret: 21957
+Test Label: 1.0, Predicted Arm: 0 <-> Time: 13762016.00 nanosec
+Test Label: 1.0, Predicted Arm: 0 <-> Time: 2951739.00 nanosec
+Run 9:
+  [Thompson] Training Time: 107.98 seconds | Cumulative Reward: 11136 | Regret: 21914
+  [Ensemble] Training Time: 111.98 seconds | Cumulative Reward: 11090 | Regret: 21960
+Test Label: 1.0, Predicted Arm: 0 <-> Time: 14213037.00 nanosec
+Test Label: 1.0, Predicted Arm: 0 <-> Time: 3042343.00 nanosec
+Run 10:
+  [Thompson] Training Time: 108.60 seconds | Cumulative Reward: 11001 | Regret: 22049
+  [Ensemble] Training Time: 112.72 seconds | Cumulative Reward: 10945 | Regret: 22105
+[Thompson] Avg Time taken for Training: 108.54933820439996 seconds
+[Thompson] Avg Cumulative Reward: 11083.6
+[Thompson] Avg Regret: 21966.4
+[Ensemble] Avg Time taken for Training: 112.29029273300011 seconds
+[Ensemble] Avg Cumulative Reward: 11062.1
+[Ensemble] Avg Regret: 21987.9
